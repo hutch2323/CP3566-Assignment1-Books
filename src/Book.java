@@ -1,3 +1,4 @@
+import java.util.ArrayList;
 import java.util.List;
 
 public class Book {
@@ -5,7 +6,7 @@ public class Book {
     private String title;
     private int editionNumber;
     private String copyright;
-    private List<Author> authorList;
+    private List<Author> authorList = new ArrayList<>();
 
     public Book(String isbn, String title, int editionNumber, String copyright){
         this.isbn = isbn;

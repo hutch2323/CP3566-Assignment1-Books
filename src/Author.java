@@ -1,10 +1,11 @@
+import java.util.ArrayList;
 import java.util.List;
 
 public class Author {
     private int authorID;
     private String firstName;
     private String lastName;
-    private List<Book> bookList;
+    private List<Book> bookList = new ArrayList<>();
 
     public Author(int authorID, String firstName, String lastName){
         this.authorID = authorID;
