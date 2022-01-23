@@ -1,15 +1,17 @@
 import java.sql.*;
+import java.util.ArrayList;
 import java.util.List;
 
 public class BookDatabaseManager {
     static private String DB_URL = "jdbc:mariadb://localhost:3300/books";
     static private String USER = "root";
     static private String PASS = "password";
-    private List<Book> bookList;
-    private List<Author> authorList;
+    private List<Book> bookList = new ArrayList<>();
+    private List<Author> authorList = new ArrayList<>();
 
     public BookDatabaseManager(){
-
+        loadBooks();
+        loadAuthors();
     }
 
     public List<Book> getBookList() {
@@ -28,36 +30,73 @@ public class BookDatabaseManager {
         this.authorList = authorList;
     }
 
-    private ResultSet loadDatabase(String sqlQuery){
+    private void loadDatabase(String query){
         // Open a connection
         try (Connection conn = DriverManager.getConnection(DB_URL, USER, PASS);
              Statement stmt = conn.createStatement();
-             ResultSet rs = stmt.executeQuery(sqlQuery);) {
-            return rs;
+             ResultSet rs = stmt.executeQuery(query);){
+
+            if (query.contains("titles")) {
+                while (rs.next()) {
+                    Book book = new Book(rs.getString("isbn"), rs.getString("title"),
+                            rs.getInt("editionNumber"), rs.getString("copyright"));
+
+                    String sql = "Select a.authorID, a.firstName, a.lastName " +
+                            "from authors a join authorisbn ai " +
+                            "ON a.authorID = ai.authorID " +
+                            "JOIN titles t " +
+                            "ON ai.isbn = t.isbn " +
+                            "where t.isbn = ?";
+
+                    PreparedStatement pstmt = conn.prepareStatement(sql);
+                    pstmt.setString(1, book.getIsbn());
+                    ResultSet rsAuthors = pstmt.executeQuery();
+
+                    while (rsAuthors.next()) {
+                        Author author = new Author(rsAuthors.getInt("authorID"),
+                                rsAuthors.getString("firstName"), rsAuthors.getString("lastName"));
+                        book.getAuthorList().add(author);
+                    }
+                    this.getBookList().add(book);
+                }
+            } else {
+                while (rs.next()) {
+                    Author author = new Author(rs.getInt("authorID"), rs.getString("firstName"),
+                            rs.getString("lastName"));
+
+                    String sql = "Select t.isbn, t.title, t.editionNumber, t.copyright " +
+                            "from titles t join authorisbn ai " +
+                            "ON t.isbn = ai.isbn " +
+                            "JOIN authors a " +
+                            "ON ai.authorID = a.authorID " +
+                            "where a.authorID = ?";
+
+                    PreparedStatement pstmt = conn.prepareStatement(sql);
+                    pstmt.setInt(1, author.getAuthorID());
+                    ResultSet rsBooks = pstmt.executeQuery();
+
+                    while (rsBooks.next()) {
+                        Book book = new Book(rsBooks.getString("isbn"), rsBooks.getString("title"),
+                                rsBooks.getInt("editionNumber"), rsBooks.getString("copyright"));
+                        author.getBookList().add(book);
+                    }
+                    this.getAuthorList().add(author);
+                }
+            }
+
         } catch (SQLException e) {
             e.printStackTrace();
-            return null;
         }
     }
 
-    public void loadBooks() throws SQLException {
+    public void loadBooks(){
         String querySQL = "Select * from titles";
-        ResultSet rs = loadDatabase(querySQL);
-        while (rs.next()) {
-            Book book = new Book(rs.getString("isbn"), rs.getString("title"),
-                    rs.getInt("editionNumber"), rs.getString("copyright"));
-            this.getBookList().add(book);
-        }
+        loadDatabase(querySQL);
     }
 
-    public void loadAuthors() throws SQLException {
+    public void loadAuthors(){
         String querySQL = "Select * from authors";
-        ResultSet rs = loadDatabase(querySQL);
-        while (rs.next()) {
-            Author author = new Author(rs.getInt("authorID"), rs.getString("firstName"),
-                    rs.getString("lastName"));
-            this.getAuthorList().add(author);
-        }
+        loadDatabase(querySQL);
     }
 
     public void addNewBook(Book book){
@@ -83,6 +122,8 @@ public class BookDatabaseManager {
         } catch (SQLException e) {
             e.printStackTrace();
         }
+        this.getBookList().clear();
+        loadBooks();
     }
 
     public void addNewAuthor(Author author){
@@ -107,5 +148,7 @@ public class BookDatabaseManager {
         } catch (SQLException e) {
             e.printStackTrace();
         }
+        this.getAuthorList().clear();
+        loadAuthors();
     }
 }
