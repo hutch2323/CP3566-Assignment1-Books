@@ -6,11 +6,10 @@ public class Author {
     private String lastName;
     private List<Book> bookList;
 
-    public Author(int authorID, String firstName, String lastName, List<Book> bookList){
+    public Author(int authorID, String firstName, String lastName){
         this.authorID = authorID;
         this.firstName = firstName;
         this.lastName = lastName;
-        this.bookList = bookList;
     }
 
     public int getAuthorID() {

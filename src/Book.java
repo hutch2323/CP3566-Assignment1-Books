@@ -7,12 +7,11 @@ public class Book {
     private String copyright;
     private List<Author> authorList;
 
-    public Book(String isbn, String title, int editionNumber, String copyright, List<Author> authorList){
+    public Book(String isbn, String title, int editionNumber, String copyright){
         this.isbn = isbn;
         this.title = title;
         this.editionNumber = editionNumber;
         this.copyright = copyright;
-        this.authorList = authorList;
     }
 
     public String getIsbn() {
